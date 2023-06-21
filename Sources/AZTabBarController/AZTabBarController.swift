@@ -161,7 +161,12 @@ open class AZTabBarController: UIViewController {
     open var highlightsSelectedButton:Bool = false
     
     /// The appearance of the notification badge.
-    open var notificationBadgeAppearance: BadgeAppearance = BadgeAppearance()
+    open var notificationBadgeAppearance: BadgeAppearance = {
+        var appearance = BadgeAppearance()
+        appearance.distanceFromCenterX = 15
+        appearance.distanceFromCenterY = -10
+        return appearance
+    }()
     
     /// The height of the selection indicator.
     open var selectionIndicatorHeight:CGFloat = 1.0{
@@ -544,8 +549,6 @@ open class AZTabBarController: UIViewController {
     open func setBadgeText(_ text: String?, atIndex index:Int){
         if let buttons = buttons{
             if index < buttons.count{
-                self.notificationBadgeAppearance.distanceFromCenterX = 15
-                self.notificationBadgeAppearance.distanceFromCenterY = -10
                 let button = buttons[index] as! AZTabBarButton
                 button.addBadge(text: text, appearance: notificationBadgeAppearance)
             }
