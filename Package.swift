@@ -12,7 +12,7 @@ let package = Package(
     dependencies: [
         .package(name: "EasyNotificationBadge",
                  url: "https://github.com/bevischen2/EasyNotificationBadge.git",
-                 from: "1.2.1"),
+                 .branch("master")),
     ],
     targets: [
         .target(
