@@ -1116,6 +1116,8 @@ open class AZTabBarController: UIViewController {
             selectionIndicatorBottomConstraint?.isActive = true
             selectionIndicatorBottomConstraint?.constant = selectionIndicatorYOffset
         }
+        
+        self.selectionIndicator.layer.cornerRadius = selectionIndicatorCornerRadius
     }
     
     private func setupSeparatorLine() {
