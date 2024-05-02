@@ -17,6 +17,11 @@ public typealias AZTabBarAction = (() -> Void)
 
 open class AZTabBarController: UIViewController {
     
+    public enum SelectionIndicatorPosition {
+        case up
+        case down
+    }
+    
     /*
      *  MARK: - Static instance methods
      */
@@ -169,7 +174,36 @@ open class AZTabBarController: UIViewController {
     }()
     
     /// The height of the selection indicator.
-    open var selectionIndicatorHeight:CGFloat = 1.0{
+    open var selectionIndicatorHeight: CGFloat = 1.0 {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+    
+    /// The width of the selection indicator.
+    /// If nil, the width is equal to button's width.
+    open var selectionIndicatorWidth: CGFloat? {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+    
+    /// The y-offset of the selection indicator.
+    open var selectionIndicatorYOffset: CGFloat = 0.0 {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+        
+    /// The position of the selection indicator.
+    open var selectionIndicatorPosition: SelectionIndicatorPosition = .down {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+    
+    /// The corner radius of the selection indicator.
+    open var selectionIndicatorCornerRadius: CGFloat = 0.0 {
         didSet{
             updateInterfaceIfNeeded()
         }
@@ -289,7 +323,15 @@ open class AZTabBarController: UIViewController {
     
     internal var buttonsContainerHeightConstraintInitialConstant:CGFloat!
     
-    internal var selectionIndicatorHeightConstraint:NSLayoutConstraint!
+    internal var selectionIndicatorHeightConstraint: NSLayoutConstraint!
+    
+    internal var selectionIndicatorWidthConstraint: NSLayoutConstraint!
+    
+    internal var selectionIndicatorDefaultWidthConstraint: NSLayoutConstraint!
+    
+    internal var selectionIndicatorBottomConstraint: NSLayoutConstraint?
+    
+    internal var selectionIndicatorTopConstraint: NSLayoutConstraint?
     
     /*
      * MARK: - Private Properties
@@ -343,7 +385,7 @@ open class AZTabBarController: UIViewController {
         //add in correct hierachy
         view.addSubview(controllersContainer)
         view.addSubview(buttonsContainer)
-        view.addSubview(separatorLine)
+        buttonsContainer.addSubview(separatorLine)
         buttonsContainer.addSubview(buttonsStackView)
         
         //disable autoresizing mask
@@ -445,7 +487,12 @@ open class AZTabBarController: UIViewController {
     }
     
     override open func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        let selectedButtonX: CGFloat = self.buttons[self.selectedIndex].frame.origin.x
+        var buttonXOffset: CGFloat = 0
+        if let selectionIndicatorWidth {
+            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
+            buttonXOffset = (buttonWidth - selectionIndicatorWidth) / 2
+        }
+        let selectedButtonX: CGFloat = self.buttons[self.selectedIndex].frame.origin.x + buttonXOffset
         self.selectionIndicatorLeadingConstraint.constant = selectedButtonX
     }
 
@@ -893,8 +940,8 @@ open class AZTabBarController: UIViewController {
     
     private func setupInterface(){
         self.setupButtons()
-        self.setupSelectionIndicator()
         self.setupSeparatorLine()
+        self.setupSelectionIndicator()
         self.didSetUpInterface = true
     }
     
@@ -1068,6 +1115,32 @@ open class AZTabBarController: UIViewController {
         }
         self.selectionIndicatorHeightConstraint.constant = self.selectionIndicatorHeight
         self.selectionIndicator.backgroundColor = self.selectionIndicatorColor
+        
+        if let selectionIndicatorWidth {
+            selectionIndicatorDefaultWidthConstraint.isActive = false
+            selectionIndicatorWidthConstraint.isActive = true
+            selectionIndicatorWidthConstraint.constant = selectionIndicatorWidth
+            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
+            let constant = (buttonWidth - selectionIndicatorWidth) / 2
+            selectionIndicatorLeadingConstraint.constant = constant
+        } else {
+            selectionIndicatorWidthConstraint.isActive = false
+            selectionIndicatorDefaultWidthConstraint.isActive = true
+            selectionIndicatorLeadingConstraint.constant = 0
+        }
+        
+        switch selectionIndicatorPosition {
+        case .up:
+            selectionIndicatorBottomConstraint?.isActive = false
+            selectionIndicatorTopConstraint?.isActive = true
+            selectionIndicatorTopConstraint?.constant = selectionIndicatorYOffset
+        case .down:
+            selectionIndicatorTopConstraint?.isActive = false
+            selectionIndicatorBottomConstraint?.isActive = true
+            selectionIndicatorBottomConstraint?.constant = selectionIndicatorYOffset
+        }
+        
+        self.selectionIndicator.layer.cornerRadius = selectionIndicatorCornerRadius
     }
     
     private func setupSeparatorLine() {
@@ -1082,8 +1155,14 @@ open class AZTabBarController: UIViewController {
             return
         }
         
+        var buttonXOffset: CGFloat = 0
+        if let selectionIndicatorWidth {
+            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
+            buttonXOffset = (buttonWidth - selectionIndicatorWidth) / 2
+        }
+        
         //let constant:CGFloat = (self.buttons[index] as! UIButton).frame.origin.x
-        let constant: CGFloat = ((buttonsContainer.frame.size.width / CGFloat(tabCount)) * CGFloat(index))
+        let constant: CGFloat = ((buttonsContainer.frame.size.width / CGFloat(tabCount)) * CGFloat(index)) + buttonXOffset
         
         self.buttonsContainer.layoutIfNeeded()
         
@@ -1157,9 +1236,21 @@ fileprivate extension AZTabBarController {
         selectionIndicatorLeadingConstraint = selectionIndicator.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor)
         selectionIndicatorHeightConstraint = selectionIndicator.heightAnchor.constraint(equalToConstant: 3)
         selectionIndicatorLeadingConstraint.isActive = true
-        selectionIndicator.widthAnchor.constraint(equalTo: buttons[0].widthAnchor, multiplier: 1.0).isActive = true
         selectionIndicatorHeightConstraint.isActive = true
-        selectionIndicator.bottomAnchor.constraint(equalTo: buttonsStackView.bottomAnchor).isActive = true
+        
+        selectionIndicatorWidthConstraint = selectionIndicator.widthAnchor.constraint(equalToConstant: 0)
+        
+        selectionIndicatorDefaultWidthConstraint = selectionIndicator.widthAnchor.constraint(equalTo: buttons[0].widthAnchor, multiplier: 1.0)
+        selectionIndicatorDefaultWidthConstraint.isActive = true
+        
+        switch selectionIndicatorPosition {
+        case .up:
+            selectionIndicatorTopConstraint = selectionIndicator.topAnchor.constraint(equalTo: buttonsStackView.topAnchor)
+            selectionIndicatorTopConstraint?.isActive = true
+        case .down:
+            selectionIndicatorBottomConstraint = selectionIndicator.bottomAnchor.constraint(equalTo: buttonsStackView.bottomAnchor)
+            selectionIndicatorBottomConstraint?.isActive = true
+        }
     }
     
     func setupConstraints(forChildController controller: UIViewController) {

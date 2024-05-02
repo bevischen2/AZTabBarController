@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-public protocol AZTabBarButtonDelegate: class {
+public protocol AZTabBarButtonDelegate: AnyObject {
     
     
     /// Function used to decide if the TabBarButton should animate upon interaction.
