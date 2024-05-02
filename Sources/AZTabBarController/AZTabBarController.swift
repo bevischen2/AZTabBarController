@@ -323,9 +323,14 @@ open class AZTabBarController: UIViewController {
     
     internal var buttonsContainerHeightConstraintInitialConstant:CGFloat!
     
-    internal var selectionIndicatorHeightConstraint:NSLayoutConstraint!
+    internal var selectionIndicatorHeightConstraint: NSLayoutConstraint!
+    
+    internal var selectionIndicatorWidthConstraint: NSLayoutConstraint!
+    
+    internal var selectionIndicatorDefaultWidthConstraint: NSLayoutConstraint!
     
     internal var selectionIndicatorBottomConstraint: NSLayoutConstraint?
+    
     internal var selectionIndicatorTopConstraint: NSLayoutConstraint?
     
     /*
@@ -482,7 +487,12 @@ open class AZTabBarController: UIViewController {
     }
     
     override open func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        let selectedButtonX: CGFloat = self.buttons[self.selectedIndex].frame.origin.x
+        var buttonXOffset: CGFloat = 0
+        if let selectionIndicatorWidth {
+            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
+            buttonXOffset = (buttonWidth - selectionIndicatorWidth) / 2
+        }
+        let selectedButtonX: CGFloat = self.buttons[self.selectedIndex].frame.origin.x + buttonXOffset
         self.selectionIndicatorLeadingConstraint.constant = selectedButtonX
     }
 
@@ -1106,6 +1116,19 @@ open class AZTabBarController: UIViewController {
         self.selectionIndicatorHeightConstraint.constant = self.selectionIndicatorHeight
         self.selectionIndicator.backgroundColor = self.selectionIndicatorColor
         
+        if let selectionIndicatorWidth {
+            selectionIndicatorDefaultWidthConstraint.isActive = false
+            selectionIndicatorWidthConstraint.isActive = true
+            selectionIndicatorWidthConstraint.constant = selectionIndicatorWidth
+            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
+            let constant = (buttonWidth - selectionIndicatorWidth) / 2
+            selectionIndicatorLeadingConstraint.constant = constant
+        } else {
+            selectionIndicatorWidthConstraint.isActive = false
+            selectionIndicatorDefaultWidthConstraint.isActive = true
+            selectionIndicatorLeadingConstraint.constant = 0
+        }
+        
         switch selectionIndicatorPosition {
         case .up:
             selectionIndicatorBottomConstraint?.isActive = false
@@ -1132,8 +1155,14 @@ open class AZTabBarController: UIViewController {
             return
         }
         
+        var buttonXOffset: CGFloat = 0
+        if let selectionIndicatorWidth {
+            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
+            buttonXOffset = (buttonWidth - selectionIndicatorWidth) / 2
+        }
+        
         //let constant:CGFloat = (self.buttons[index] as! UIButton).frame.origin.x
-        let constant: CGFloat = ((buttonsContainer.frame.size.width / CGFloat(tabCount)) * CGFloat(index))
+        let constant: CGFloat = ((buttonsContainer.frame.size.width / CGFloat(tabCount)) * CGFloat(index)) + buttonXOffset
         
         self.buttonsContainer.layoutIfNeeded()
         
@@ -1207,8 +1236,12 @@ fileprivate extension AZTabBarController {
         selectionIndicatorLeadingConstraint = selectionIndicator.leadingAnchor.constraint(equalTo: buttonsContainer.leadingAnchor)
         selectionIndicatorHeightConstraint = selectionIndicator.heightAnchor.constraint(equalToConstant: 3)
         selectionIndicatorLeadingConstraint.isActive = true
-        selectionIndicator.widthAnchor.constraint(equalTo: buttons[0].widthAnchor, multiplier: 1.0).isActive = true
         selectionIndicatorHeightConstraint.isActive = true
+        
+        selectionIndicatorWidthConstraint = selectionIndicator.widthAnchor.constraint(equalToConstant: 0)
+        
+        selectionIndicatorDefaultWidthConstraint = selectionIndicator.widthAnchor.constraint(equalTo: buttons[0].widthAnchor, multiplier: 1.0)
+        selectionIndicatorDefaultWidthConstraint.isActive = true
         
         switch selectionIndicatorPosition {
         case .up:
