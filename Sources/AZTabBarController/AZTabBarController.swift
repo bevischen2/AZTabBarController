@@ -17,6 +17,11 @@ public typealias AZTabBarAction = (() -> Void)
 
 open class AZTabBarController: UIViewController {
     
+    public enum SelectionIndicatorPosition {
+        case up
+        case down
+    }
+    
     /*
      *  MARK: - Static instance methods
      */
@@ -169,7 +174,36 @@ open class AZTabBarController: UIViewController {
     }()
     
     /// The height of the selection indicator.
-    open var selectionIndicatorHeight:CGFloat = 1.0{
+    open var selectionIndicatorHeight: CGFloat = 1.0 {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+    
+    /// The width of the selection indicator.
+    /// If nil, the width is equal to button's width.
+    open var selectionIndicatorWidth: CGFloat? {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+    
+    /// The y-offset of the selection indicator.
+    open var selectionIndicatorYOffset: CGFloat = 0.0 {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+        
+    /// The position of the selection indicator.
+    open var selectionIndicatorPosition: SelectionIndicatorPosition = .down {
+        didSet{
+            updateInterfaceIfNeeded()
+        }
+    }
+    
+    /// The corner radius of the selection indicator.
+    open var selectionIndicatorCornerRadius: CGFloat = 0.0 {
         didSet{
             updateInterfaceIfNeeded()
         }
@@ -291,6 +325,9 @@ open class AZTabBarController: UIViewController {
     
     internal var selectionIndicatorHeightConstraint:NSLayoutConstraint!
     
+    internal var selectionIndicatorBottomConstraint: NSLayoutConstraint?
+    internal var selectionIndicatorTopConstraint: NSLayoutConstraint?
+    
     /*
      * MARK: - Private Properties
      */
@@ -343,7 +380,7 @@ open class AZTabBarController: UIViewController {
         //add in correct hierachy
         view.addSubview(controllersContainer)
         view.addSubview(buttonsContainer)
-        view.addSubview(separatorLine)
+        buttonsContainer.addSubview(separatorLine)
         buttonsContainer.addSubview(buttonsStackView)
         
         //disable autoresizing mask
@@ -893,8 +930,8 @@ open class AZTabBarController: UIViewController {
     
     private func setupInterface(){
         self.setupButtons()
-        self.setupSelectionIndicator()
         self.setupSeparatorLine()
+        self.setupSelectionIndicator()
         self.didSetUpInterface = true
     }
     
@@ -1068,6 +1105,17 @@ open class AZTabBarController: UIViewController {
         }
         self.selectionIndicatorHeightConstraint.constant = self.selectionIndicatorHeight
         self.selectionIndicator.backgroundColor = self.selectionIndicatorColor
+        
+        switch selectionIndicatorPosition {
+        case .up:
+            selectionIndicatorBottomConstraint?.isActive = false
+            selectionIndicatorTopConstraint?.isActive = true
+            selectionIndicatorTopConstraint?.constant = selectionIndicatorYOffset
+        case .down:
+            selectionIndicatorTopConstraint?.isActive = false
+            selectionIndicatorBottomConstraint?.isActive = true
+            selectionIndicatorBottomConstraint?.constant = selectionIndicatorYOffset
+        }
     }
     
     private func setupSeparatorLine() {
@@ -1159,7 +1207,15 @@ fileprivate extension AZTabBarController {
         selectionIndicatorLeadingConstraint.isActive = true
         selectionIndicator.widthAnchor.constraint(equalTo: buttons[0].widthAnchor, multiplier: 1.0).isActive = true
         selectionIndicatorHeightConstraint.isActive = true
-        selectionIndicator.bottomAnchor.constraint(equalTo: buttonsStackView.bottomAnchor).isActive = true
+        
+        switch selectionIndicatorPosition {
+        case .up:
+            selectionIndicatorTopConstraint = selectionIndicator.topAnchor.constraint(equalTo: buttonsStackView.topAnchor)
+            selectionIndicatorTopConstraint?.isActive = true
+        case .down:
+            selectionIndicatorBottomConstraint = selectionIndicator.bottomAnchor.constraint(equalTo: buttonsStackView.bottomAnchor)
+            selectionIndicatorBottomConstraint?.isActive = true
+        }
     }
     
     func setupConstraints(forChildController controller: UIViewController) {
