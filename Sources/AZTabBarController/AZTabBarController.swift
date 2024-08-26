@@ -141,6 +141,11 @@ open class AZTabBarController: UIViewController {
     /// The current selected index.
     fileprivate (set) open var selectedIndex:Int!
     
+    /// The current selected view controller.
+    open var selectedViewController: UIViewController? {
+        controllers[selectedIndex]
+    }
+    
     /// Is the tab bar in the middle of an animation.
     fileprivate (set) open var isAnimating: Bool = false
     
