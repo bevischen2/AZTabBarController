@@ -13,54 +13,54 @@ public class AZTabBarButton: UIButton{
     
     var longClickTimer: Timer?
     
-    open weak var delegate: AZTabBarButtonDelegate!
+    open weak var delegate: AZTabBarButtonDelegate?
     
     open var shouldAnimateInteraction:Bool {
         get{
-            return delegate.shouldAnimate(self)
+            return delegate?.shouldAnimate(self) ?? false
         }
     }
     
     open var beginAnimationDuration: TimeInterval{
         get{
-            return delegate.beginAnimationDuration(self)
+            return delegate?.beginAnimationDuration(self) ?? 0.2
         }
     }
     
     open var endAnimationDuration: TimeInterval{
         get{
-            return delegate.endAnimationDuration(self)
+            return delegate?.endAnimationDuration(self) ?? 0.25
         }
     }
     
     open var initialSpringVelocity: CGFloat{
         get{
-            return delegate.initialSpringVelocity(self)
+            return delegate?.initialSpringVelocity(self) ?? 6.0
         }
     }
     
     open var usingSpringWithDamping: CGFloat{
         get{
-            return delegate.usingSpringWithDamping(self)
+            return delegate?.usingSpringWithDamping(self) ?? 0.2
         }
     }
     
     open var longClickTriggerDuration: TimeInterval{
         get{
-            return delegate.longClickTriggerDuration(self)
+            return delegate?.longClickTriggerDuration(self) ?? 0.5
         }
     }
     
     open var isLongClickEnabled: Bool{
         get{
-            return delegate.shouldLongClick(self)
+            return delegate?.shouldLongClick(self) ?? false
         }
     }
     
     @objc func longClickPerformed(){
         if isLongClickEnabled{
             self.touchesCancelled(Set<UITouch>(), with: nil)
-            self.delegate.longClickAction(self)
+            self.delegate?.longClickAction(self)
         }
     }
     
@@ -96,7 +96,7 @@ public class AZTabBarButton: UIButton{
             return
         }
         
-        let animate = delegate.shouldAnimate(self)
+        let animate = delegate?.shouldAnimate(self) ?? false
         
         if let titleLabel = titleLabel{
             titleLabel.frame = self.titleRect(forContentRect: self.frame)
@@ -123,6 +123,10 @@ public class AZTabBarButton: UIButton{
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         centerTitleLabel()
+    }
+    
+    deinit {
+        longClickTimer?.invalidate()
     }
     
     private func centerTitleLabel() {
