@@ -139,7 +139,7 @@ open class AZTabBarController: UIViewController {
     open var animateTabChange: Bool = false
     
     /// The current selected index.
-    fileprivate (set) open var selectedIndex:Int!
+    fileprivate(set) open var selectedIndex:Int!
     
     /// The current selected view controller.
     open var selectedViewController: UIViewController? {
@@ -147,7 +147,7 @@ open class AZTabBarController: UIViewController {
     }
     
     /// Is the tab bar in the middle of an animation.
-    fileprivate (set) open var isAnimating: Bool = false
+    fileprivate(set) open var isAnimating: Bool = false
     
     /// If the separator line view that is between the buttons container and the primary view container is visable.
     open var separatorLineVisible:Bool = true{
@@ -295,10 +295,10 @@ open class AZTabBarController: UIViewController {
     }
     
     /// The view that holds the views of the controllers.
-    fileprivate (set) public var controllersContainer:UIView!
+    fileprivate(set) public var controllersContainer:UIView!
     
     /// The view that holds the stack and selection indicator
-    fileprivate (set) public var buttonsContainer:UIView!
+    fileprivate(set) public var buttonsContainer:UIView!
     
     /// The stack view that holds the buttons
     fileprivate var buttonsStackView: UIStackView!
@@ -322,7 +322,7 @@ open class AZTabBarController: UIViewController {
     internal var selectedTabIcons: [UIImage]?
     
     /// The view that goes inside the buttons container and indicates which menu is selected.
-    internal (set) public var selectionIndicator:UIView!
+    internal(set) public var selectionIndicator:UIView!
     
     internal var selectionIndicatorLeadingConstraint:NSLayoutConstraint!
     
@@ -492,13 +492,13 @@ open class AZTabBarController: UIViewController {
     }
     
     override open func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        var buttonXOffset: CGFloat = 0
-        if let selectionIndicatorWidth {
-            let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
-            buttonXOffset = (buttonWidth - selectionIndicatorWidth) / 2
-        }
-        let selectedButtonX: CGFloat = self.buttons[self.selectedIndex].frame.origin.x + buttonXOffset
-        self.selectionIndicatorLeadingConstraint.constant = selectedButtonX
+        updateSelectionIndicatorPosition()
+    }
+
+    override open func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // 寬度改變（旋轉、折疊、展開）時，指示條的 leading constant 不會自動更新，要依目前寬度重算。
+        updateSelectionIndicatorPosition()
     }
 
     override open func viewSafeAreaInsetsDidChange() {
@@ -1154,21 +1154,32 @@ open class AZTabBarController: UIViewController {
         self.separatorLineHeightConstraint.constant = 0.5
     }
     
-    private func moveSelectionIndicator(toIndex index: Int,animated:Bool){
-        
-        if selectionIndicatorLeadingConstraint == nil{
-            return
-        }
-        
+    /// 選中第 `index` 個 tab 時，指示條 leading 約束的 constant。
+    private func selectionIndicatorLeadingConstant(forIndex index: Int) -> CGFloat {
         var buttonXOffset: CGFloat = 0
         if let selectionIndicatorWidth {
             let buttonWidth = buttonsContainer.frame.size.width / CGFloat(tabCount)
             buttonXOffset = (buttonWidth - selectionIndicatorWidth) / 2
         }
-        
-        //let constant:CGFloat = (self.buttons[index] as! UIButton).frame.origin.x
-        let constant: CGFloat = ((buttonsContainer.frame.size.width / CGFloat(tabCount)) * CGFloat(index)) + buttonXOffset
-        
+        return ((buttonsContainer.frame.size.width / CGFloat(tabCount)) * CGFloat(index)) + buttonXOffset
+    }
+
+    /// 不帶動畫，依目前寬度把指示條放回選中的 tab 上；位置沒變時不寫入，避免多餘的 layout。
+    private func updateSelectionIndicatorPosition() {
+        guard didSetUpInterface, selectionIndicatorLeadingConstraint != nil, selectedIndex != nil, tabCount > 0 else { return }
+        let constant = selectionIndicatorLeadingConstant(forIndex: selectedIndex)
+        guard abs(selectionIndicatorLeadingConstraint.constant - constant) > 0.5 else { return }
+        selectionIndicatorLeadingConstraint.constant = constant
+    }
+
+    private func moveSelectionIndicator(toIndex index: Int,animated:Bool){
+
+        if selectionIndicatorLeadingConstraint == nil{
+            return
+        }
+
+        let constant = selectionIndicatorLeadingConstant(forIndex: index)
+
         self.buttonsContainer.layoutIfNeeded()
         
         let animations = {() -> Void in
