@@ -139,7 +139,7 @@ open class AZTabBarController: UIViewController {
     open var animateTabChange: Bool = false
     
     /// The current selected index.
-    fileprivate (set) open var selectedIndex:Int!
+    fileprivate(set) open var selectedIndex:Int!
     
     /// The current selected view controller.
     open var selectedViewController: UIViewController? {
@@ -147,7 +147,7 @@ open class AZTabBarController: UIViewController {
     }
     
     /// Is the tab bar in the middle of an animation.
-    fileprivate (set) open var isAnimating: Bool = false
+    fileprivate(set) open var isAnimating: Bool = false
     
     /// If the separator line view that is between the buttons container and the primary view container is visable.
     open var separatorLineVisible:Bool = true{
@@ -295,10 +295,10 @@ open class AZTabBarController: UIViewController {
     }
     
     /// The view that holds the views of the controllers.
-    fileprivate (set) public var controllersContainer:UIView!
+    fileprivate(set) public var controllersContainer:UIView!
     
     /// The view that holds the stack and selection indicator
-    fileprivate (set) public var buttonsContainer:UIView!
+    fileprivate(set) public var buttonsContainer:UIView!
     
     /// The stack view that holds the buttons
     fileprivate var buttonsStackView: UIStackView!
@@ -322,7 +322,7 @@ open class AZTabBarController: UIViewController {
     internal var selectedTabIcons: [UIImage]?
     
     /// The view that goes inside the buttons container and indicates which menu is selected.
-    internal (set) public var selectionIndicator:UIView!
+    internal(set) public var selectionIndicator:UIView!
     
     internal var selectionIndicatorLeadingConstraint:NSLayoutConstraint!
     
